@@ -14,10 +14,10 @@ import {
   sortAssignments,
 } from "@/lib/calculations";
 import { createClient, getSessionUser, supabaseConfigured } from "@/lib/supabase/server";
-import type { Assignment, Exam, Internship, Subject, TimetableEntry } from "@/lib/types";
+import type { Assignment, Exam, Fee, Internship, Listing, Subject, TimetableEntry } from "@/lib/types";
 import type { XpEvent } from "@/lib/xp";
 import { TodaysClasses } from "@/components/timetable";
-import { ApplicationsWidget, XpCard } from "@/components/widgets";
+import { ApplicationsWidget, FeesWidget, MarketplaceWidget, XpCard } from "@/components/widgets";
 import { Badge, ButtonLink, Card, Icon, PageHeader, SetupRequired, cx, type IconName } from "@/components/ui";
 
 function StatCard({
@@ -71,7 +71,7 @@ export default async function DashboardPage() {
 
   const supabase = await createClient();
   const profile = await ensureProfile();
-  const [{ data: subjects }, { data: assignments }, { data: exams }, { data: timetable }, { data: xpEvents }, { data: internships }] =
+  const [{ data: subjects }, { data: assignments }, { data: exams }, { data: timetable }, { data: xpEvents }, { data: internships }, { data: fees }, { data: listings }] =
     await Promise.all([
       supabase.from("subjects").select("*").order("name"),
       supabase.from("assignments").select("*").order("deadline", { ascending: true }).limit(100),
@@ -79,6 +79,8 @@ export default async function DashboardPage() {
       supabase.from("timetable_entries").select("*").order("start_time"),
       supabase.from("activity_events").select("kind, created_at").order("created_at", { ascending: false }).limit(1000),
       supabase.from("internships").select("*").order("updated_at", { ascending: false }).limit(100),
+      supabase.from("fees").select("*").order("due_date", { ascending: true, nullsFirst: false }).limit(100),
+      supabase.from("listings").select("*").order("created_at", { ascending: false }).limit(50),
     ]);
 
   const subjectList = (subjects ?? []) as Subject[];
@@ -187,6 +189,11 @@ export default async function DashboardPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <XpCard events={(xpEvents ?? []) as XpEvent[]} />
         <ApplicationsWidget internships={(internships ?? []) as Internship[]} />
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <FeesWidget fees={(fees ?? []) as Fee[]} />
+        <MarketplaceWidget listings={(listings ?? []) as Listing[]} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">

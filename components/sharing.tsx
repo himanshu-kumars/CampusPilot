@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { createShareLink, deleteShareFeedback, importSubjectsCSV, revokeShareLink } from "@/lib/actions";
+import { createShareLink, deleteShareFeedback, importSubjectsCSV, replyToFeedback, revokeShareLink } from "@/lib/actions";
 import type { ShareFeedback, ShareLink } from "@/lib/types";
 import {
   Badge,
@@ -130,26 +130,29 @@ export function ShareManager({ links, feedback }: { links: ShareLink[]; feedback
                   </Button>
                 </div>
                 {notes.length > 0 && (
-                  <ul className="mt-2 space-y-2 rounded-xl bg-canvas p-3">
+                  <ul className="mt-2 space-y-3 rounded-xl bg-canvas p-3">
                     {notes.map((n) => (
-                      <li key={n.id} className="flex items-start gap-2">
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[13px] font-semibold text-ink">
-                            {n.author_name}
-                            <span className="ml-1.5 font-normal text-muted">
-                              {new Date(n.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      <li key={n.id}>
+                        <div className="flex items-start gap-2">
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[13px] font-semibold text-ink">
+                              {n.author_name}
+                              <span className="ml-1.5 font-normal text-muted">
+                                {new Date(n.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                              </span>
                             </span>
+                            <span className="block text-[13px] text-muted">{n.message}</span>
                           </span>
-                          <span className="block text-[13px] text-muted">{n.message}</span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeFeedback(n.id)}
-                          className="rounded-lg p-1.5 text-muted hover:bg-slate-100 hover:text-danger"
-                          aria-label="Delete feedback"
-                        >
-                          <Icon name="trash" className="h-4 w-4" />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => removeFeedback(n.id)}
+                            className="rounded-lg p-1.5 text-muted hover:bg-slate-100 hover:text-danger"
+                            aria-label="Delete feedback"
+                          >
+                            <Icon name="trash" className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <ReplyBox note={n} />
                       </li>
                     ))}
                   </ul>
@@ -160,6 +163,60 @@ export function ShareManager({ links, feedback }: { links: ShareLink[]; feedback
         </ul>
       )}
     </Card>
+  );
+}
+
+/* --------------------------- Feedback reply box -------------------------- */
+
+function ReplyBox({ note }: { note: ShareFeedback }) {
+  const [open, setOpen] = useState(false);
+  const [reply, setReply] = useState(note.reply ?? "");
+  const [sending, startSend] = useTransition();
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    startSend(async () => {
+      const res = await replyToFeedback(note.id, { reply });
+      if (res.ok) {
+        toast("Reply sent — the mentor sees it on your report.");
+        setOpen(false);
+      } else toast(res.error, "error");
+    });
+  };
+
+  if (note.reply && !open) {
+    return (
+      <div className="mt-1.5 ml-4 rounded-lg border-l-2 border-primary bg-surface py-1.5 pr-2 pl-3">
+        <p className="text-[13px] text-muted">
+          <span className="font-semibold text-ink">Your reply: </span>
+          {note.reply}
+        </p>
+        <button type="button" onClick={() => setOpen(true)} className="mt-0.5 text-xs font-semibold text-primary hover:underline">
+          Edit reply
+        </button>
+      </div>
+    );
+  }
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="mt-1.5 ml-4 text-xs font-semibold text-primary hover:underline">
+        Reply
+      </button>
+    );
+  }
+  return (
+    <form onSubmit={submit} className="mt-1.5 ml-4 flex gap-2">
+      <Input
+        value={reply}
+        onChange={(e) => setReply(e.target.value)}
+        placeholder="Write a reply…"
+        maxLength={1000}
+        className="text-[13px]"
+      />
+      <Button size="sm" type="submit" loading={sending}>
+        Send
+      </Button>
+    </form>
   );
 }
 

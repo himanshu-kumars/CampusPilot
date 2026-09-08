@@ -11,11 +11,14 @@ import { logEvent } from "./events";
 import {
   assignmentSchema,
   examSchema,
+  feedbackReplySchema,
+  feeSchema,
   firstError,
   groupSchema,
   groupTaskSchema,
   internshipSchema,
   joinGroupSchema,
+  listingSchema,
   noteSchema,
   profileSchema,
   shareLinkSchema,
@@ -26,7 +29,9 @@ import type {
   ActionResult,
   Assignment,
   Exam,
+  Fee,
   Internship,
+  Listing,
   Profile,
   Subject,
 } from "./types";
@@ -996,6 +1001,189 @@ export async function deleteInternship(id: string): Promise<ActionResult> {
     const { error } = await supabase.from("internships").delete().eq("id", id).eq("user_id", user.id);
     if (error) return dbError("deleteInternship", error);
     INTERNSHIP_PATHS.forEach((p) => revalidatePath(p));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+/* --------------------------- Phase 6: Marketplace -------------------------- */
+
+const LISTING_PATHS = ["/marketplace", "/dashboard"];
+
+function normalizeListing(raw: Record<string, unknown>) {
+  const emptyToNull = (v: unknown) => (v === "" ? null : v);
+  return { ...raw, description: emptyToNull(raw.description), condition: emptyToNull(raw.condition) };
+}
+
+export async function createListing(input: unknown): Promise<ActionResult> {
+  if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
+  const parsed = listingSchema.safeParse(
+    normalizeListing((input ?? {}) as Record<string, unknown>)
+  );
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  try {
+    const { supabase, user } = await requireUser();
+    const { error } = await supabase.from("listings").insert({ ...parsed.data, user_id: user.id });
+    if (error) return dbError("createListing", error);
+    await logEvent(supabase, user.id, "listing_created", `Listed “${parsed.data.title}”`);
+    LISTING_PATHS.forEach((p) => revalidatePath(p));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+export async function updateListing(id: string, input: unknown): Promise<ActionResult> {
+  if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
+  const parsed = listingSchema.safeParse(
+    normalizeListing((input ?? {}) as Record<string, unknown>)
+  );
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  try {
+    const { supabase, user } = await requireUser();
+    const { error } = await supabase
+      .from("listings")
+      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("user_id", user.id);
+    if (error) return dbError("updateListing", error);
+    LISTING_PATHS.forEach((p) => revalidatePath(p));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+export async function setListingStatus(
+  listing: Listing,
+  status: Listing["status"]
+): Promise<ActionResult> {
+  return updateListing(listing.id, {
+    title: listing.title,
+    description: listing.description,
+    price: listing.price,
+    category: listing.category,
+    condition: listing.condition,
+    contact: listing.contact,
+    status,
+  });
+}
+
+export async function deleteListing(id: string): Promise<ActionResult> {
+  if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
+  try {
+    const { supabase, user } = await requireUser();
+    const { error } = await supabase.from("listings").delete().eq("id", id).eq("user_id", user.id);
+    if (error) return dbError("deleteListing", error);
+    LISTING_PATHS.forEach((p) => revalidatePath(p));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+/* ------------------------------ Phase 6: Fees ------------------------------ */
+
+const FEE_PATHS = ["/fees", "/dashboard"];
+
+function normalizeFee(raw: Record<string, unknown>) {
+  const emptyToNull = (v: unknown) => (v === "" ? null : v);
+  return {
+    ...raw,
+    due_date: emptyToNull(raw.due_date),
+    notes: emptyToNull(raw.notes),
+    receipt_text: emptyToNull(raw.receipt_text),
+  };
+}
+
+export async function createFee(input: unknown): Promise<ActionResult> {
+  if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
+  const parsed = feeSchema.safeParse(normalizeFee((input ?? {}) as Record<string, unknown>));
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  try {
+    const { supabase, user } = await requireUser();
+    const { error } = await supabase.from("fees").insert({ ...parsed.data, user_id: user.id });
+    if (error) return dbError("createFee", error);
+    await logEvent(supabase, user.id, "fee_added", `Tracking fee “${parsed.data.title}”`);
+    FEE_PATHS.forEach((p) => revalidatePath(p));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+export async function updateFee(id: string, input: unknown): Promise<ActionResult> {
+  if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
+  const parsed = feeSchema.safeParse(normalizeFee((input ?? {}) as Record<string, unknown>));
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  try {
+    const { supabase, user } = await requireUser();
+    const { error } = await supabase
+      .from("fees")
+      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("user_id", user.id);
+    if (error) return dbError("updateFee", error);
+    FEE_PATHS.forEach((p) => revalidatePath(p));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+export async function setFeeStatus(fee: Fee, status: Fee["status"]): Promise<ActionResult> {
+  const res = await updateFee(fee.id, {
+    title: fee.title,
+    amount: fee.amount,
+    due_date: fee.due_date,
+    category: fee.category,
+    status,
+    notes: fee.notes,
+    receipt_text: fee.receipt_text,
+  });
+  if (res.ok && status === "paid" && fee.status !== "paid") {
+    try {
+      const { supabase, user } = await requireUser();
+      await logEvent(supabase, user.id, "fee_paid", `Paid “${fee.title}”`);
+    } catch {
+      /* XP logging must never break tracking */
+    }
+  }
+  return res;
+}
+
+export async function deleteFee(id: string): Promise<ActionResult> {
+  if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
+  try {
+    const { supabase, user } = await requireUser();
+    const { error } = await supabase.from("fees").delete().eq("id", id).eq("user_id", user.id);
+    if (error) return dbError("deleteFee", error);
+    FEE_PATHS.forEach((p) => revalidatePath(p));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+/* ------------------------- Phase 6: Feedback replies ------------------------ */
+
+export async function replyToFeedback(id: string, input: unknown): Promise<ActionResult> {
+  if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
+  const parsed = feedbackReplySchema.safeParse((input ?? {}) as Record<string, unknown>);
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  try {
+    const { supabase, user } = await requireUser();
+    const { data: links } = await supabase.from("share_links").select("id").eq("user_id", user.id);
+    const ids = ((links ?? []) as { id: string }[]).map((l) => l.id);
+    if (ids.length === 0) return { ok: false, error: "Feedback not found." };
+    const { error } = await supabase
+      .from("share_feedback")
+      .update({ reply: parsed.data.reply, replied_at: new Date().toISOString() })
+      .eq("id", id)
+      .in("share_link_id", ids);
+    if (error) return dbError("replyToFeedback", error);
+    revalidatePath("/settings");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };

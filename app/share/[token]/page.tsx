@@ -22,6 +22,14 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
   if (error || !data) notFound();
   const report = data as ShareReport;
 
+  const { data: thread } = await supabase.rpc("get_share_feedback", { p_token: token });
+  const notes = ((thread ?? []) as {
+    author_name: string;
+    message: string;
+    reply: string | null;
+    created_at: string;
+  }[]).filter((n) => n.author_name && n.message);
+
   const total = report.subjects.reduce((s, x) => s + x.total, 0);
   const attended = report.subjects.reduce((s, x) => s + x.attended, 0);
   const overall = total > 0 ? Math.round((attended / total) * 1000) / 10 : null;
@@ -142,6 +150,31 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
             )}
           </Card>
         </div>
+
+        {notes.length > 0 && (
+          <Card>
+            <h2 className="mb-3 text-base font-semibold text-ink">Discussion</h2>
+            <ul className="space-y-4">
+              {notes.map((n, i) => (
+                <li key={i}>
+                  <p className="text-sm font-semibold text-ink">
+                    {n.author_name}
+                    <span className="ml-1.5 font-normal text-muted">
+                      {new Date(n.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                    </span>
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted">{n.message}</p>
+                  {n.reply && (
+                    <p className="mt-1.5 ml-4 rounded-lg border-l-2 border-primary bg-canvas py-1.5 pr-2 pl-3 text-sm text-muted">
+                      <span className="font-semibold text-ink">{report.name} replied: </span>
+                      {n.reply}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
 
         <ShareFeedbackForm token={token} />
 

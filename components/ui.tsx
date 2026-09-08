@@ -45,7 +45,9 @@ export type IconName =
   | "briefcase"
   | "trophy"
   | "wifiOff"
-  | "cap";
+  | "cap"
+  | "tag"
+  | "wallet";
 
 const PATHS: Record<IconName, ReactNode> = {
   grid: (
@@ -184,6 +186,18 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M12 4 2.5 9l9.5 5 7.5-3.9V15" />
       <path d="M6.5 11.5V16c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.5" />
       <path d="M21.5 9v5" />
+    </>
+  ),
+  tag: (
+    <>
+      <path d="M3.5 12V4.5A1 1 0 0 1 4.5 3.5H12L20.5 12a1.4 1.4 0 0 1 0 2L14 20.5a1.4 1.4 0 0 1-2 0L3.5 12Z" />
+      <circle cx="9" cy="9" r="1.4" />
+    </>
+  ),
+  wallet: (
+    <>
+      <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h11A3.5 3.5 0 0 1 19 9.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 3 18V7.5Z" />
+      <path d="M3 10h14.5M19 13.5h-4.5a1 1 0 0 0 0 2H19" />
     </>
   ),
 };

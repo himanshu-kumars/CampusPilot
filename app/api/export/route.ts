@@ -23,6 +23,8 @@ export async function GET() {
     "viva_sessions",
     "timetable_entries",
     "internships",
+    "listings",
+    "fees",
     "activity_events",
   ] as const;
   const out: Record<string, unknown> = {

@@ -22,6 +22,8 @@ const NAV: { href: string; label: string; short: string; icon: IconName }[] = [
   { href: "/groups", label: "Study Groups", short: "Groups", icon: "users" },
   { href: "/internships", label: "Internships", short: "Jobs", icon: "briefcase" },
   { href: "/placement", label: "Placement Prep", short: "Place.", icon: "cap" },
+  { href: "/marketplace", label: "Marketplace", short: "Market", icon: "tag" },
+  { href: "/fees", label: "Fees", short: "Fees", icon: "wallet" },
   { href: "/analytics", label: "Analytics", short: "Stats", icon: "chart" },
 ];
 

@@ -49,6 +49,9 @@ const KIND_LABEL: Record<string, string> = {
   internship_added: "Application",
   internship_offer: "Offer",
   internship_accepted: "Accepted",
+  listing_created: "Listing",
+  fee_added: "Fee",
+  fee_paid: "Paid",
 };
 
 export default async function AnalyticsPage() {

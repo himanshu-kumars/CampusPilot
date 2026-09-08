@@ -158,7 +158,60 @@ export interface ShareFeedback {
   share_link_id: string;
   author_name: string;
   message: string;
+  reply: string | null;
+  replied_at: string | null;
   created_at: string;
+}
+
+export type ListingCategory =
+  | "books"
+  | "notes"
+  | "electronics"
+  | "furniture"
+  | "services"
+  | "tickets"
+  | "other";
+
+export type ListingCondition = "new" | "like_new" | "good" | "fair";
+export type ListingStatus = "active" | "reserved" | "closed";
+
+export interface Listing {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  price: number;
+  category: ListingCategory;
+  condition: ListingCondition | null;
+  contact: string;
+  status: ListingStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export type FeeCategory =
+  | "tuition"
+  | "hostel"
+  | "mess"
+  | "transport"
+  | "exam"
+  | "library"
+  | "other";
+
+export type FeeStatus = "unpaid" | "paid";
+
+export interface Fee {
+  id: string;
+  user_id: string;
+  title: string;
+  amount: number;
+  due_date: string | null;
+  category: FeeCategory;
+  status: FeeStatus;
+  notes: string | null;
+  receipt_text: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface StudyGroup {

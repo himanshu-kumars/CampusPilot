@@ -35,6 +35,8 @@ npm run dev
    (XP needs no new table — it derives from `activity_events`).
 4. Run **`supabase/migrations/005_phase5.sql`** for mentor feedback
    (`share_feedback` + token-checked RPC) and `push_subscriptions`.
+4. Run **`supabase/migrations/006_phase6.sql`** for `listings`, `fees`, feedback
+   reply columns + thread RPC (mentors see your replies on the report).
 4. Optionally run **`31_SUPABASE_TRIGGER.sql`** (auto-creates a profile row on signup —
    the app also self-heals a missing profile at login).
 4. Copy your project URL + anon key into `.env.local`:
@@ -76,6 +78,7 @@ app/
     timetable/ groups/                             (Phase 3)
     internships/                                     (Phase 4)
     placement/                                       (Phase 5)
+    marketplace/ fees/                               (Phase 6)
   share/[token]/           Public read-only mentor report (Phase 3)
   offline/                 Offline fallback page (Phase 4)
   manifest.ts              PWA manifest (Phase 3)
@@ -168,6 +171,19 @@ sample output; exam questions and viva honestly require a key.
   Setup: `npx web-push generate-vapid-keys` → set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` /
   `VAPID_PRIVATE_KEY` / `CRON_SECRET` / `SUPABASE_SERVICE_ROLE_KEY`, deploy to
   Vercel (cron runs automatically). Without keys the UI honestly says push is off.
+
+## Phase 6 features
+
+- **Marketplace** (`/marketplace`): campus buy/sell/lend board — books, notes,
+  electronics and more, with search, category filter, condition, INR pricing
+  (0 = free), and available/reserved/closed flow. Any logged-in student can
+  browse; contact details are seller-provided and revealed on interest.
+- **Fee tracker** (`/fees`): tuition/hostel/mess/exam dues with amounts, due dates,
+  paid/unpaid states and overdue highlighting, plus dashboard totals. Optional
+  **receipt scan**: Tesseract.js OCR runs on-device (loaded on demand) to prefill
+  amount + date — always shown for verification, manual entry always works.
+- **Feedback replies**: two-way mentor notes — reply from Settings, mentors see
+  the thread on your share report via a token-checked RPC.
 
 ## Key decisions
 

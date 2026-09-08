@@ -33,6 +33,9 @@ export const XP_RULES: Record<string, number> = {
   internship_added: 10,
   internship_offer: 50,
   internship_accepted: 100,
+  listing_created: 10,
+  fee_added: 5,
+  fee_paid: 15,
 };
 
 /** Points for unknown/future kinds — generous default so new features earn. */

@@ -263,6 +263,57 @@ export const pushSubscriptionSchema = z.object({
   }),
 });
 
+/* --------------------------- Phase 6: marketplace -------------------------- */
+
+export const LISTING_CATEGORIES = [
+  "books",
+  "notes",
+  "electronics",
+  "furniture",
+  "services",
+  "tickets",
+  "other",
+] as const;
+
+export const LISTING_CONDITIONS = ["new", "like_new", "good", "fair"] as const;
+export const LISTING_STATUSES = ["active", "reserved", "closed"] as const;
+
+export const listingSchema = z.object({
+  title: z.string().trim().min(1, "Title is required.").max(120),
+  description: z.string().trim().max(1000).nullable().optional(),
+  price: z.coerce.number().min(0, "Price can't be negative.").max(9999999),
+  category: z.enum(LISTING_CATEGORIES).default("other"),
+  condition: z.enum(LISTING_CONDITIONS).nullable().optional(),
+  contact: z.string().trim().min(1, "Tell buyers how to reach you.").max(120),
+  status: z.enum(LISTING_STATUSES).default("active"),
+});
+
+/* ----------------------------- Phase 6: fees ------------------------------- */
+
+export const FEE_CATEGORIES = [
+  "tuition",
+  "hostel",
+  "mess",
+  "transport",
+  "exam",
+  "library",
+  "other",
+] as const;
+
+export const feeSchema = z.object({
+  title: z.string().trim().min(1, "Title is required.").max(120),
+  amount: z.coerce.number().min(0, "Amount can't be negative.").max(99999999),
+  due_date: z.string().nullable().optional(),
+  category: z.enum(FEE_CATEGORIES).default("other"),
+  status: z.enum(["unpaid", "paid"]).default("unpaid"),
+  notes: z.string().trim().max(1000).nullable().optional(),
+  receipt_text: z.string().max(2000).nullable().optional(),
+});
+
+export const feedbackReplySchema = z.object({
+  reply: z.string().trim().min(1, "Write a reply first.").max(1000),
+});
+
 /* ----------------------------- Phase 3: sharing ---------------------------- */
 
 export const shareLinkSchema = z.object({
