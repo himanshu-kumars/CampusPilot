@@ -1,0 +1,73 @@
+{
+  "profile": {
+    "full_name": "Demo Student",
+    "college": "Demo University",
+    "semester": "1"
+  },
+  "subjects": [
+    {
+      "name": "Mathematics-I",
+      "attended": 18,
+      "total": 24,
+      "target": 75
+    },
+    {
+      "name": "Digital Electronics",
+      "attended": 17,
+      "total": 25,
+      "target": 75
+    },
+    {
+      "name": "AI Applications",
+      "attended": 19,
+      "total": 22,
+      "target": 75
+    },
+    {
+      "name": "Biology for Engineers",
+      "attended": 21,
+      "total": 24,
+      "target": 75
+    }
+  ],
+  "assignments": [
+    {
+      "title": "Mathematics Assignment",
+      "priority": "high",
+      "status": "pending"
+    },
+    {
+      "title": "AI Lab Record",
+      "priority": "medium",
+      "status": "in_progress"
+    },
+    {
+      "title": "Biology Case Study",
+      "priority": "medium",
+      "status": "pending"
+    }
+  ],
+  "exams": [
+    {
+      "subject": "Mathematics-I",
+      "preparation_percent": 30,
+      "syllabus": [
+        "Unit 1",
+        "Unit 2",
+        "Unit 3"
+      ],
+      "weak_topics": [
+        "Integration"
+      ]
+    },
+    {
+      "subject": "Digital Electronics",
+      "preparation_percent": 45,
+      "syllabus": [
+        "Number Systems",
+        "Boolean Algebra"
+      ],
+      "weak_topics": []
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CampusPilotStudyPlan",
+  "type": "object",
+  "required": [
+    "summary",
+    "urgency",
+    "total_hours",
+    "days",
+    "final_revision",
+    "tips"
+  ],
+  "properties": {
+    "summary": {
+      "type": "string"
+    },
+    "urgency": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "total_hours": {
+      "type": "number",
+      "minimum": 0
+    },
+    "days": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "date",
+          "focus",
+          "tasks"
+        ],
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "focus": {
+            "type": "string"
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "title",
+                "duration_minutes",
+                "type",
+                "priority"
+              ],
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "duration_minutes": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 720
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "learn",
+                    "practice",
+                    "revision",
+                    "mock",
+                    "break"
+                  ]
+                },
+                "priority": {
+                  "type": "string",
+                  "enum": [
+                    "high",
+                    "medium",
+                    "low"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "final_revision": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tips": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
