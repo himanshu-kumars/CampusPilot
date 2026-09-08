@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { Badge, Card, Icon, PageHeader, ProgressBar, SetupRequired, cx, type IconName } from "@/components/ui";
+import { Badge, Card, Icon, PageHeader, ProgressBar, SetupRequired, type IconName } from "@/components/ui";
+import { cx } from "@/lib/cx";
 import {
   assignmentState,
   attendancePercent,

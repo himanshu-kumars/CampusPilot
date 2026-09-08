@@ -8,6 +8,7 @@ import { createClient, supabaseConfigured } from "./supabase/server";
 // (reads ./test/data/*.pdf). lib/pdf-parse.js is the clean parser entry.
 const pdf = require("pdf-parse/lib/pdf-parse.js") as typeof import("pdf-parse");
 import { logEvent } from "./events";
+import { isMissingTableError } from "./errors";
 import {
   assignmentSchema,
   examSchema,
@@ -52,16 +53,6 @@ function dbError(message: string, err: unknown): { ok: false; error: string } {
   return { ok: false, error: "Could not save your data. Check your connection and try again." };
 }
 
-/** True when a PostgREST error means "table doesn't exist" (migrations not run). */
-export function isMissingTableError(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const code = (err as { code?: unknown }).code;
-  const message = String((err as { message?: unknown }).message ?? "");
-  return (
-    code === "PGRST205" ||
-    /could not find the table|schema cache|relation .* does not exist/i.test(message)
-  );
-}
 
 /* ------------------------------ Auth/Profile ------------------------------ */
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ensureProfile, isMissingTableError } from "@/lib/actions";
+import { ensureProfile } from "@/lib/actions";
+import { isMissingTableError } from "@/lib/errors";
 import {
   assignmentState,
   attendancePercent,
@@ -18,7 +19,8 @@ import type { Assignment, Exam, Fee, Internship, Listing, Subject, TimetableEntr
 import type { XpEvent } from "@/lib/xp";
 import { TodaysClasses } from "@/components/timetable";
 import { ApplicationsWidget, FeesWidget, MarketplaceWidget, XpCard } from "@/components/widgets";
-import { Badge, ButtonLink, Card, DbSetupRequired, Icon, PageHeader, SetupRequired, cx, type IconName } from "@/components/ui";
+import { Badge, ButtonLink, Card, DbSetupRequired, Icon, PageHeader, SetupRequired, type IconName } from "@/components/ui";
+import { cx } from "@/lib/cx";
 
 function StatCard({
   label,

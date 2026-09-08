@@ -13,9 +13,11 @@ import {
   type TextareaHTMLAttributes,
 } from "react";
 
-export function cx(...parts: (string | false | null | undefined)[]): string {
-  return parts.filter(Boolean).join(" ");
-}
+import { cx } from "@/lib/cx";
+
+// Re-exported so existing client imports from "@/components/ui" keep working.
+// Server components must import cx from "@/lib/cx" directly (never from here).
+export { cx };
 
 /* --------------------------------- Icons --------------------------------- */
 
