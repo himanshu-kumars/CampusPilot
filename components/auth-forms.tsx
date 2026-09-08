@@ -6,6 +6,49 @@ import { useState } from "react";
 import { createClient, supabaseConfigured } from "@/lib/supabase/client";
 import { Button, Field, FormError, Icon, Input, SetupRequired } from "./ui";
 
+/** Rejects with Error("TIMEOUT") if the Supabase request hangs (no more infinite spinners). */
+function withTimeout<T>(promise: Promise<T>, ms = 25000): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("TIMEOUT")), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer)) as Promise<T>;
+}
+
+function connectionMessage(e: unknown, action: string): string {
+  if (e instanceof Error && e.message === "TIMEOUT") {
+    return `Couldn't reach Supabase (timed out). Check your internet, verify NEXT_PUBLIC_SUPABASE_URL in .env.local, and make sure your Supabase project isn't paused — then restart "npm run dev" and try ${action} again.`;
+  }
+  if (
+    e instanceof TypeError ||
+    (e instanceof Error && /fetch|network|load failed|offline/i.test(e.message))
+  ) {
+    return `Can't reach Supabase from this browser. Check your internet connection and the project URL in .env.local, then try ${action} again.`;
+  }
+  return e instanceof Error && e.message ? e.message : `Could not ${action}. Try again.`;
+}
+
+function TroubleHint() {
+  return (
+    <details className="mt-4 text-sm text-muted">
+      <summary className="cursor-pointer font-medium hover:text-ink">Having trouble? Check these</summary>
+      <ul className="mt-2 list-disc space-y-1 pl-5 text-[13px]">
+        <li>
+          <code className="rounded bg-slate-100 px-1">.env.local</code> has the correct Supabase URL +
+          key, and you restarted <code className="rounded bg-slate-100 px-1">npm run dev</code> after
+          creating it.
+        </li>
+        <li>Your Supabase project is active (not paused) at supabase.com/dashboard.</li>
+        <li>You ran the SQL files (07, then 002–006) in the Supabase SQL Editor.</li>
+        <li>
+          If login says &quot;not confirmed&quot;, check your inbox or turn off &quot;Confirm
+          email&quot; in Supabase → Authentication settings.
+        </li>
+      </ul>
+    </details>
+  );
+}
+
 function AuthCard({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4 py-12">
@@ -52,7 +95,9 @@ export function LoginForm() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+      const { error: err } = await withTimeout(
+        supabase.auth.signInWithPassword({ email, password })
+      );
       if (err) {
         const msg = err.message.toLowerCase();
         if (msg.includes("email not confirmed")) {
@@ -67,8 +112,9 @@ export function LoginForm() {
       }
       router.push(next);
       router.refresh();
-    } catch {
-      setError("Could not log you in. Check your connection and try again.");
+    } catch (e) {
+      console.error("[auth] login failed", e);
+      setError(connectionMessage(e, "logging in"));
     } finally {
       setLoading(false);
     }
@@ -79,14 +125,15 @@ export function LoginForm() {
     setError(null);
     try {
       const supabase = createClient();
-      const { error: err } = await supabase.auth.resend({ type: "signup", email });
+      const { error: err } = await withTimeout(supabase.auth.resend({ type: "signup", email }));
       if (err) setError(err.message);
       else {
         setResent(true);
         setShowResend(false);
       }
-    } catch {
-      setError("Could not resend the email. Try again in a bit.");
+    } catch (e) {
+      console.error("[auth] resend failed", e);
+      setError(connectionMessage(e, "resending the email"));
     } finally {
       setResending(false);
     }
@@ -122,6 +169,7 @@ export function LoginForm() {
           Create an account
         </Link>
       </p>
+      <TroubleHint />
     </AuthCard>
   );
 }
@@ -157,13 +205,15 @@ export function SignupForm() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const { data, error: err } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: {
-          data: { full_name: form.fullName, college: form.college || null, semester: form.semester || null },
-        },
-      });
+      const { data, error: err } = await withTimeout(
+        supabase.auth.signUp({
+          email: form.email,
+          password: form.password,
+          options: {
+            data: { full_name: form.fullName, college: form.college || null, semester: form.semester || null },
+          },
+        })
+      );
       if (err) {
         if (err.message.toLowerCase().includes("already registered") || err.message.toLowerCase().includes("already exists")) {
           setError("This email already has an account. Log in instead.");
@@ -179,8 +229,9 @@ export function SignupForm() {
       }
       router.push("/dashboard");
       router.refresh();
-    } catch {
-      setError("Could not create your account. Check your connection and try again.");
+    } catch (e) {
+      console.error("[auth] signup failed", e);
+      setError(connectionMessage(e, "creating your account"));
     } finally {
       setLoading(false);
     }
@@ -227,6 +278,7 @@ export function SignupForm() {
           Log in
         </Link>
       </p>
+      <TroubleHint />
     </AuthCard>
   );
 }
