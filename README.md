@@ -33,6 +33,8 @@ npm run dev
    study groups, share links) plus the code-checked join and member-list RPCs.
 4. Run **`supabase/migrations/004_phase4.sql`** for the Phase 4 `internships` table
    (XP needs no new table — it derives from `activity_events`).
+4. Run **`supabase/migrations/005_phase5.sql`** for mentor feedback
+   (`share_feedback` + token-checked RPC) and `push_subscriptions`.
 4. Optionally run **`31_SUPABASE_TRIGGER.sql`** (auto-creates a profile row on signup —
    the app also self-heals a missing profile at login).
 4. Copy your project URL + anon key into `.env.local`:
@@ -73,6 +75,7 @@ app/
     notes/ practice/ viva/ calendar/ analytics/   (Phase 2)
     timetable/ groups/                             (Phase 3)
     internships/                                     (Phase 4)
+    placement/                                       (Phase 5)
   share/[token]/           Public read-only mentor report (Phase 3)
   offline/                 Offline fallback page (Phase 4)
   manifest.ts              PWA manifest (Phase 3)
@@ -150,6 +153,21 @@ sample output; exam questions and viva honestly require a key.
 - **Offline mode**: service worker (production only) with network-first navigation
   falling back to a cached `/offline` page, and stale-while-revalidate static
   caching. Offline never fakes data — it just fails gracefully.
+
+## Phase 5 features
+
+- **Placement prep** (`/placement`): 10 AI-drilled tracks (quant, logical, verbal,
+  DSA, OOPs, DBMS, OS, CN, HR, puzzles) reusing the practice quiz engine — attempts
+  and best scores saved, plus a static interview checklist (before/during/after).
+- **Mentor feedback**: anyone opening your share link can leave a note via a
+  token-checked RPC (no login, expiry enforced); notes show in Settings per link
+  with owner delete. Revoking a link deletes its notes.
+- **Push reminders** (Settings): VAPID web-push with per-browser enable/test, a
+  real test delivery, and a daily Vercel-cron summary (assignments due in 24h,
+  exams in 3 days). Quiet by design — no due items means no notification.
+  Setup: `npx web-push generate-vapid-keys` → set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` /
+  `VAPID_PRIVATE_KEY` / `CRON_SECRET` / `SUPABASE_SERVICE_ROLE_KEY`, deploy to
+  Vercel (cron runs automatically). Without keys the UI honestly says push is off.
 
 ## Key decisions
 

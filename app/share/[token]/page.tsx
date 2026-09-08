@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ShareFeedbackForm } from "@/components/sharing";
 import { Badge, Card, Icon } from "@/components/ui";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
 
@@ -141,6 +142,8 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
             )}
           </Card>
         </div>
+
+        <ShareFeedbackForm token={token} />
 
         <p className="pt-2 text-center text-xs text-muted">
           Shared read-only via CampusPilot. Attendance figures are student-recorded estimates.

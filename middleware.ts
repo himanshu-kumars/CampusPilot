@@ -14,6 +14,7 @@ const PROTECTED = [
   "/timetable",
   "/groups",
   "/internships",
+  "/placement",
   "/analytics",
   "/settings",
 ];
@@ -67,6 +68,7 @@ export const config = {
     "/timetable/:path*",
     "/groups/:path*",
     "/internships/:path*",
+    "/placement/:path*",
     "/analytics/:path*",
     "/settings/:path*",
   ],

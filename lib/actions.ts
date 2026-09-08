@@ -874,6 +874,23 @@ export async function createShareLink(input: unknown): Promise<ActionResult<stri
   }
 }
 
+export async function deleteShareFeedback(id: string): Promise<ActionResult> {
+  if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
+  try {
+    const { supabase, user } = await requireUser();
+    // Owner-only: the row must belong to one of the user's links (RLS enforces too).
+    const { data: links } = await supabase.from("share_links").select("id").eq("user_id", user.id);
+    const ids = ((links ?? []) as { id: string }[]).map((l) => l.id);
+    if (ids.length === 0) return { ok: false, error: "Feedback not found." };
+    const { error } = await supabase.from("share_feedback").delete().eq("id", id).in("share_link_id", ids);
+    if (error) return dbError("deleteShareFeedback", error);
+    revalidatePath("/settings");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
 export async function revokeShareLink(id: string): Promise<ActionResult> {
   if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
   try {

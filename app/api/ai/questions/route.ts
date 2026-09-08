@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { AINotConfiguredError, AIValidationError, generateQuestions } from "@/lib/ai";
 import { logEvent } from "@/lib/events";
 import { createClient, supabaseConfigured } from "@/lib/supabase/server";
-import { firstError, questionsRequestSchema } from "@/lib/validation";
+import { TRACK_META, firstError, questionsRequestSchema } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   if (!supabaseConfigured()) {
@@ -69,6 +69,17 @@ export async function POST(req: NextRequest) {
       `Weak topics:\n${(exam.weak_topics as string) || "(none listed)"}`,
     ].join("\n\n");
     examId = exam.id as string;
+  } else if (input.track) {
+    const meta = TRACK_META[input.track];
+    title = `Placement: ${meta.label}`;
+    context = [
+      `Placement preparation track: ${meta.label}.`,
+      `Coverage: ${meta.blurb}`,
+      input.track === "hr"
+        ? "Format: short-answer HR questions a candidate must answer in 1–2 minutes. The 'answer' field should be bullet guidance on a strong response, and 'explanation' the reasoning behind it."
+        : "Format: mix MCQ (4 options) and short questions exactly like campus placement tests. Keep questions self-contained — no external material.",
+      "Keep difficulty realistic for tier-2/tier-3 college placements unless 'hard' is requested.",
+    ].join("\n\n");
   }
 
   const hourAgo = new Date(Date.now() - 3_600_000).toISOString();

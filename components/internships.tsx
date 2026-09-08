@@ -261,7 +261,7 @@ function InternshipCard({ internship }: { internship: Internship }) {
         <button
           type="button"
           onClick={() => setEditOpen(true)}
-          className="rounded-lg p-1.5 text-muted hover:bg-surface2 hover:text-ink"
+          className="rounded-lg p-1.5 text-muted hover:bg-slate-100 hover:text-ink"
           aria-label="Edit application"
         >
           <Icon name="pencil" className="h-4 w-4" />
@@ -269,7 +269,7 @@ function InternshipCard({ internship }: { internship: Internship }) {
         <button
           type="button"
           onClick={remove}
-          className="rounded-lg p-1.5 text-muted hover:bg-surface2 hover:text-danger"
+          className="rounded-lg p-1.5 text-muted hover:bg-slate-100 hover:text-danger"
           aria-label="Delete application"
         >
           <Icon name="trash" className="h-4 w-4" />

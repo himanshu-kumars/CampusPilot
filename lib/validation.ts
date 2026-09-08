@@ -128,11 +128,14 @@ export const questionsRequestSchema = z
   .object({
     examId: z.string().uuid().optional(),
     noteId: z.string().uuid().optional(),
+    track: z
+      .enum(["quant", "logical", "verbal", "dsa", "oops", "dbms", "os", "cn", "hr", "puzzles"])
+      .optional(),
     count: z.coerce.number().int().min(3).max(15).default(8),
     difficulty: z.enum(["easy", "medium", "hard", "mixed"]).default("mixed"),
   })
-  .refine((d) => d.examId || d.noteId, {
-    message: "Pick an exam or a note to generate questions from.",
+  .refine((d) => d.examId || d.noteId || d.track, {
+    message: "Pick an exam, a note, or a placement track to generate questions from.",
   });
 
 export const practiceQuestionSchema = z.object({
@@ -215,6 +218,49 @@ export const groupTaskSchema = z.object({
   title: z.string().trim().min(1, "Title is required.").max(140),
   details: z.string().trim().max(1000).nullable().optional(),
   due_date: z.string().nullable().optional(),
+});
+
+/* --------------------------- Phase 5: placement ---------------------------- */
+
+export const PLACEMENT_TRACKS = [
+  "quant",
+  "logical",
+  "verbal",
+  "dsa",
+  "oops",
+  "dbms",
+  "os",
+  "cn",
+  "hr",
+  "puzzles",
+] as const;
+
+export type PlacementTrack = (typeof PLACEMENT_TRACKS)[number];
+
+export const TRACK_META: Record<PlacementTrack, { label: string; blurb: string }> = {
+  quant: { label: "Quantitative Aptitude", blurb: "Percentages, ratios, time–work, probability." },
+  logical: { label: "Logical Reasoning", blurb: "Series, coding–decoding, blood relations, puzzles." },
+  verbal: { label: "Verbal Ability", blurb: "Comprehension, grammar, vocabulary, parajumbles." },
+  dsa: { label: "DSA", blurb: "Arrays, strings, recursion, sorting, complexity." },
+  oops: { label: "OOPs", blurb: "Classes, inheritance, polymorphism, SOLID basics." },
+  dbms: { label: "DBMS", blurb: "SQL queries, normalization, transactions, indexing." },
+  os: { label: "Operating Systems", blurb: "Processes, scheduling, memory, deadlocks." },
+  cn: { label: "Computer Networks", blurb: "OSI/TCP-IP, routing, DNS, HTTP." },
+  hr: { label: "HR Round", blurb: "Intro, strengths, situational answers — short format." },
+  puzzles: { label: "Guesstimates & Puzzles", blurb: "Fermi estimates and classic interview puzzles." },
+};
+
+export const feedbackSchema = z.object({
+  author: z.string().trim().min(1, "Please add your name.").max(60),
+  message: z.string().trim().min(1, "Please write a message.").max(1000),
+});
+
+export const pushSubscriptionSchema = z.object({
+  endpoint: z.string().url().max(2000),
+  keys: z.object({
+    p256dh: z.string().min(1).max(500),
+    auth: z.string().min(1).max(500),
+  }),
 });
 
 /* ----------------------------- Phase 3: sharing ---------------------------- */

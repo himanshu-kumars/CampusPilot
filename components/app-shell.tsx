@@ -21,6 +21,7 @@ const NAV: { href: string; label: string; short: string; icon: IconName }[] = [
   { href: "/timetable", label: "Timetable", short: "Table", icon: "clock" },
   { href: "/groups", label: "Study Groups", short: "Groups", icon: "users" },
   { href: "/internships", label: "Internships", short: "Jobs", icon: "briefcase" },
+  { href: "/placement", label: "Placement Prep", short: "Place.", icon: "cap" },
   { href: "/analytics", label: "Analytics", short: "Stats", icon: "chart" },
 ];
 

@@ -153,6 +153,14 @@ export interface ShareLink {
   created_at: string;
 }
 
+export interface ShareFeedback {
+  id: string;
+  share_link_id: string;
+  author_name: string;
+  message: string;
+  created_at: string;
+}
+
 export interface StudyGroup {
   id: string;
   name: string;

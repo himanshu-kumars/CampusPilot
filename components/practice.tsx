@@ -20,7 +20,7 @@ import {
   toast,
 } from "./ui";
 
-interface QuizState {
+export interface QuizState {
   title: string;
   questions: PracticeQuestion[];
   setId: string | null;
@@ -55,7 +55,7 @@ interface AnswerLog {
   correct: boolean;
 }
 
-function QuizRunner({ quiz, onExit }: { quiz: QuizState; onExit: () => void }) {
+export function QuizRunner({ quiz, onExit }: { quiz: QuizState; onExit: () => void }) {
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState("");
   const [typed, setTyped] = useState("");

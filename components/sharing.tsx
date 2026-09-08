@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { createShareLink, importSubjectsCSV, revokeShareLink } from "@/lib/actions";
-import type { ShareLink } from "@/lib/types";
+import { createShareLink, deleteShareFeedback, importSubjectsCSV, revokeShareLink } from "@/lib/actions";
+import type { ShareFeedback, ShareLink } from "@/lib/types";
 import {
+  Badge,
   Button,
   Card,
   Field,
@@ -11,10 +12,11 @@ import {
   Icon,
   Input,
   Select,
+  Textarea,
   toast,
 } from "./ui";
 
-export function ShareManager({ links }: { links: ShareLink[] }) {
+export function ShareManager({ links, feedback }: { links: ShareLink[]; feedback: ShareFeedback[] }) {
   const [origin, setOrigin] = useState("");
   const [label, setLabel] = useState("");
   const [days, setDays] = useState("14");
@@ -52,6 +54,12 @@ export function ShareManager({ links }: { links: ShareLink[] }) {
   const revoke = async (id: string) => {
     const res = await revokeShareLink(id);
     if (res.ok) toast("Link revoked.");
+    else toast(res.error, "error");
+  };
+
+  const removeFeedback = async (id: string) => {
+    const res = await deleteShareFeedback(id);
+    if (res.ok) toast("Feedback deleted.");
     else toast(res.error, "error");
   };
 
@@ -100,25 +108,127 @@ export function ShareManager({ links }: { links: ShareLink[] }) {
       <FormError message={error} />
 
       {links.length > 0 && (
-        <ul className="mt-4 space-y-2 border-t border-line pt-4">
-          {links.map((l) => (
-            <li key={l.id} className="flex items-center gap-2 text-sm">
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium text-ink">{l.label || "Untitled link"}</span>
-                <span className="block text-xs text-muted">
-                  Created {new Date(l.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                  {l.expires_at ? ` · Expires ${new Date(l.expires_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : " · Never expires"}
-                </span>
-              </span>
-              <Button size="sm" variant="secondary" onClick={() => copy(l.token)}>
-                Copy
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => revoke(l.id)} aria-label="Revoke link">
-                <Icon name="trash" className="h-4 w-4" />
-              </Button>
-            </li>
-          ))}
+        <ul className="mt-4 space-y-4 border-t border-line pt-4">
+          {links.map((l) => {
+            const notes = feedback.filter((f) => f.share_link_id === l.id);
+            return (
+              <li key={l.id} className="text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium text-ink">{l.label || "Untitled link"}</span>
+                    <span className="block text-xs text-muted">
+                      Created {new Date(l.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      {l.expires_at ? ` · Expires ${new Date(l.expires_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : " · Never expires"}
+                    </span>
+                  </span>
+                  {notes.length > 0 && <Badge tone="info">{notes.length} note{notes.length === 1 ? "" : "s"}</Badge>}
+                  <Button size="sm" variant="secondary" onClick={() => copy(l.token)}>
+                    Copy
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => revoke(l.id)} aria-label="Revoke link">
+                    <Icon name="trash" className="h-4 w-4" />
+                  </Button>
+                </div>
+                {notes.length > 0 && (
+                  <ul className="mt-2 space-y-2 rounded-xl bg-canvas p-3">
+                    {notes.map((n) => (
+                      <li key={n.id} className="flex items-start gap-2">
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[13px] font-semibold text-ink">
+                            {n.author_name}
+                            <span className="ml-1.5 font-normal text-muted">
+                              {new Date(n.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                            </span>
+                          </span>
+                          <span className="block text-[13px] text-muted">{n.message}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeFeedback(n.id)}
+                          className="rounded-lg p-1.5 text-muted hover:bg-slate-100 hover:text-danger"
+                          aria-label="Delete feedback"
+                        >
+                          <Icon name="trash" className="h-4 w-4" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
+      )}
+    </Card>
+  );
+}
+
+/* ---------------------- Public mentor feedback form --------------------- */
+
+export function ShareFeedbackForm({ token }: { token: string }) {
+  const [author, setAuthor] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSending(true);
+    try {
+      const res = await fetch(`/api/share/${encodeURIComponent(token)}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ author, message }),
+      });
+      const json = (await res.json()) as { success: boolean; error?: string };
+      if (!res.ok || !json.success) {
+        setError(json.error ?? "Could not send your note.");
+        return;
+      }
+      setSent(true);
+    } catch {
+      setError("Could not reach the server. Check your connection and try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <Card>
+      <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+        <Icon name="chat" className="h-5 w-5 text-primary" />
+        Leave feedback
+      </h2>
+      {sent ? (
+        <p className="mt-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-success ring-1 ring-emerald-600/20">
+          Thanks — your note was sent to the student.
+        </p>
+      ) : (
+        <>
+          <p className="mt-1 mb-4 text-sm text-muted">
+            You&apos;re viewing a read-only report. Drop a note below — only the student sees it.
+          </p>
+          <form onSubmit={submit} className="space-y-3">
+            <Field label="Your name" required>
+              <Input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="e.g. Prof. Rao" maxLength={60} required />
+            </Field>
+            <Field label="Message" required>
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="What should they focus on next?"
+                maxLength={1000}
+                required
+              />
+            </Field>
+            <FormError message={error} />
+            <Button type="submit" loading={sending}>
+              Send note
+            </Button>
+          </form>
+        </>
       )}
     </Card>
   );

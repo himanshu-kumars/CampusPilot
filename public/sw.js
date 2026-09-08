@@ -36,6 +36,45 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+/* Phase 5: push reminders. Payload shape: { title, body, url }. */
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = {};
+  }
+  const title = data.title || "CampusPilot";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || "You have an update.",
+      icon: "/icon.svg",
+      badge: "/icon.svg",
+      data: { url: data.url || "/dashboard" },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/dashboard";
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((list) => {
+        for (const c of list) {
+          if (c.url.indexOf(self.location.origin) === 0 && "focus" in c) {
+            if ("navigate" in c) c.navigate(url);
+            return c.focus();
+          }
+        }
+        if (clients.openWindow) return clients.openWindow(url);
+        return undefined;
+      })
+      .catch(() => undefined)
+  );
+});
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;

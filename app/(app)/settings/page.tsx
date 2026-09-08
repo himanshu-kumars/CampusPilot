@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { ProfileForm } from "@/components/entities";
+import { PushManager } from "@/components/push-manager";
 import { ImportExport, ShareManager } from "@/components/sharing";
 import { Button, Card, Icon, PageHeader, SetupRequired } from "@/components/ui";
 import { ensureProfile, signOut } from "@/lib/actions";
 import { createClient, getSessionUser, supabaseConfigured } from "@/lib/supabase/server";
-import type { ShareLink } from "@/lib/types";
+import type { ShareFeedback, ShareLink } from "@/lib/types";
 
 export default async function SettingsPage() {
   if (!supabaseConfigured()) {
@@ -21,17 +22,18 @@ export default async function SettingsPage() {
   if (!profile) redirect("/login?next=/settings");
 
   const supabase = await createClient();
-  const { data: links } = await supabase
-    .from("share_links")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const [{ data: links }, { data: feedback }] = await Promise.all([
+    supabase.from("share_links").select("*").order("created_at", { ascending: false }),
+    supabase.from("share_feedback").select("*").order("created_at", { ascending: false }).limit(200),
+  ]);
 
   return (
     <>
       <PageHeader title="Settings" subtitle="Manage your profile, sharing and data." />
       <div className="grid max-w-3xl gap-4">
         <ProfileForm profile={profile} />
-        <ShareManager links={(links ?? []) as ShareLink[]} />
+        <ShareManager links={(links ?? []) as ShareLink[]} feedback={(feedback ?? []) as ShareFeedback[]} />
+        <PushManager />
         <Card>
           <h2 className="text-base font-semibold text-ink">Account</h2>
           <p className="mt-0.5 mb-4 text-sm text-muted">

@@ -44,7 +44,8 @@ export type IconName =
   | "users"
   | "briefcase"
   | "trophy"
-  | "wifiOff";
+  | "wifiOff"
+  | "cap";
 
 const PATHS: Record<IconName, ReactNode> = {
   grid: (
@@ -176,6 +177,13 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M2.5 8.5a14 14 0 0 1 19 0M5.5 12a10 10 0 0 1 13 0M8.6 15.4a6 6 0 0 1 6.8 0" />
       <circle cx="12" cy="19" r="1.2" fill="currentColor" />
       <path d="M3 3l18 18" />
+    </>
+  ),
+  cap: (
+    <>
+      <path d="M12 4 2.5 9l9.5 5 7.5-3.9V15" />
+      <path d="M6.5 11.5V16c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.5" />
+      <path d="M21.5 9v5" />
     </>
   ),
 };
