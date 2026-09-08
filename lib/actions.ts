@@ -52,6 +52,17 @@ function dbError(message: string, err: unknown): { ok: false; error: string } {
   return { ok: false, error: "Could not save your data. Check your connection and try again." };
 }
 
+/** True when a PostgREST error means "table doesn't exist" (migrations not run). */
+export function isMissingTableError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const code = (err as { code?: unknown }).code;
+  const message = String((err as { message?: unknown }).message ?? "");
+  return (
+    code === "PGRST205" ||
+    /could not find the table|schema cache|relation .* does not exist/i.test(message)
+  );
+}
+
 /* ------------------------------ Auth/Profile ------------------------------ */
 
 export async function signOut(): Promise<void> {
@@ -84,7 +95,14 @@ export async function ensureProfile(): Promise<Profile | null> {
     .select("*")
     .single();
   if (error) {
-    console.error("ensureProfile failed", error);
+    // Missing table = setup step skipped. Warn (no scary red overlay) with the fix.
+    if (isMissingTableError(error)) {
+      console.warn(
+        "[setup] profiles table missing — run 07_DATABASE_SCHEMA.sql (then 002–006) in the Supabase SQL Editor."
+      );
+    } else {
+      console.error("ensureProfile failed", JSON.stringify(error));
+    }
     return null;
   }
   return created as Profile;

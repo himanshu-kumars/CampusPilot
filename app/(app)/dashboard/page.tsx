@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ensureProfile } from "@/lib/actions";
+import { ensureProfile, isMissingTableError } from "@/lib/actions";
 import {
   assignmentState,
   attendancePercent,
@@ -18,7 +18,7 @@ import type { Assignment, Exam, Fee, Internship, Listing, Subject, TimetableEntr
 import type { XpEvent } from "@/lib/xp";
 import { TodaysClasses } from "@/components/timetable";
 import { ApplicationsWidget, FeesWidget, MarketplaceWidget, XpCard } from "@/components/widgets";
-import { Badge, ButtonLink, Card, Icon, PageHeader, SetupRequired, cx, type IconName } from "@/components/ui";
+import { Badge, ButtonLink, Card, DbSetupRequired, Icon, PageHeader, SetupRequired, cx, type IconName } from "@/components/ui";
 
 function StatCard({
   label,
@@ -71,7 +71,7 @@ export default async function DashboardPage() {
 
   const supabase = await createClient();
   const profile = await ensureProfile();
-  const [{ data: subjects }, { data: assignments }, { data: exams }, { data: timetable }, { data: xpEvents }, { data: internships }, { data: fees }, { data: listings }] =
+  const [{ data: subjects, error: subjectsError }, { data: assignments }, { data: exams }, { data: timetable }, { data: xpEvents }, { data: internships }, { data: fees }, { data: listings }] =
     await Promise.all([
       supabase.from("subjects").select("*").order("name"),
       supabase.from("assignments").select("*").order("deadline", { ascending: true }).limit(100),
@@ -145,6 +145,11 @@ export default async function DashboardPage() {
         title={greeting(profile?.full_name?.split(" ")[0] ?? "there")}
         subtitle="Here's what needs your attention today."
       />
+      {isMissingTableError(subjectsError) && (
+        <div className="mb-6">
+          <DbSetupRequired />
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

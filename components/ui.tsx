@@ -626,6 +626,38 @@ export function SetupRequired() {
   );
 }
 
+export function DbSetupRequired() {
+  return (
+    <Card className="mx-auto max-w-xl">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-warning">
+          <Icon name="alert" className="h-5 w-5" />
+        </span>
+        <div>
+          <h2 className="text-base font-semibold text-ink">Database tables are missing</h2>
+          <p className="mt-1 text-sm text-muted">
+            Your account and login work fine — but the app&apos;s tables don&apos;t exist yet.
+            Run the migrations once:
+          </p>
+          <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm text-muted">
+            <li>Open your Supabase project → SQL Editor → New query.</li>
+            <li>
+              Paste and Run each file in order:{" "}
+              <code className="rounded bg-slate-100 px-1 font-mono text-xs">07_DATABASE_SCHEMA.sql</code>,{" "}
+              <code className="rounded bg-slate-100 px-1 font-mono text-xs">002_phase2.sql</code>,{" "}
+              <code className="rounded bg-slate-100 px-1 font-mono text-xs">003_phase3.sql</code>,{" "}
+              <code className="rounded bg-slate-100 px-1 font-mono text-xs">004_phase4.sql</code>,{" "}
+              <code className="rounded bg-slate-100 px-1 font-mono text-xs">005_phase5.sql</code>,{" "}
+              <code className="rounded bg-slate-100 px-1 font-mono text-xs">006_phase6.sql</code>.
+            </li>
+            <li>Come back here and refresh — your data will start saving.</li>
+          </ol>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 /* --------------------------------- Toast --------------------------------- */
 
 type ToastTone = "success" | "error" | "info";
