@@ -225,3 +225,26 @@ export const shareLinkSchema = z.object({
     message: "Pick an expiry.",
   }),
 });
+
+/* --------------------------- Phase 4: internships -------------------------- */
+
+export const INTERNSHIP_STATUSES = [
+  "wishlist",
+  "applied",
+  "screening",
+  "interview",
+  "offer",
+  "accepted",
+  "rejected",
+] as const;
+
+export const internshipSchema = z.object({
+  company: z.string().trim().min(1, "Company is required.").max(120),
+  role: z.string().trim().min(1, "Role is required.").max(120),
+  status: z.enum(INTERNSHIP_STATUSES).default("wishlist"),
+  deadline: z.string().nullable().optional(),
+  link: z.string().trim().max(500).nullable().optional(),
+  location: z.string().trim().max(120).nullable().optional(),
+  stipend: z.string().trim().max(60).nullable().optional(),
+  notes: z.string().trim().max(2000).nullable().optional(),
+});

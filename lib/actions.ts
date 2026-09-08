@@ -14,6 +14,7 @@ import {
   firstError,
   groupSchema,
   groupTaskSchema,
+  internshipSchema,
   joinGroupSchema,
   noteSchema,
   profileSchema,
@@ -25,6 +26,7 @@ import type {
   ActionResult,
   Assignment,
   Exam,
+  Internship,
   Profile,
   Subject,
 } from "./types";
@@ -149,12 +151,26 @@ export async function recordClass(
   subject: Subject,
   present: boolean
 ): Promise<ActionResult> {
-  return updateSubject(subject.id, {
+  const res = await updateSubject(subject.id, {
     name: subject.name,
     attended: subject.attended + (present ? 1 : 0),
     total: subject.total + 1,
     target_attendance: subject.target_attendance,
   });
+  if (res.ok) {
+    try {
+      const { supabase, user } = await requireUser();
+      await logEvent(
+        supabase,
+        user.id,
+        "class_recorded",
+        `Marked ${present ? "present" : "absent"} in “${subject.name}”`
+      );
+    } catch {
+      /* XP logging must never break attendance */
+    }
+  }
+  return res;
 }
 
 export async function deleteSubject(id: string): Promise<ActionResult> {
@@ -241,7 +257,7 @@ export async function setAssignmentStatus(
   assignment: Assignment,
   status: Assignment["status"]
 ): Promise<ActionResult> {
-  return updateAssignment(assignment.id, {
+  const res = await updateAssignment(assignment.id, {
     title: assignment.title,
     subject_id: assignment.subject_id,
     deadline: assignment.deadline,
@@ -249,6 +265,15 @@ export async function setAssignmentStatus(
     status,
     description: assignment.description,
   });
+  if (res.ok && status === "completed" && assignment.status !== "completed") {
+    try {
+      const { supabase, user } = await requireUser();
+      await logEvent(supabase, user.id, "assignment_completed", `Completed “${assignment.title}”`);
+    } catch {
+      /* XP logging must never break assignments */
+    }
+  }
+  return res;
 }
 
 export async function deleteAssignment(id: string): Promise<ActionResult> {
@@ -856,6 +881,104 @@ export async function revokeShareLink(id: string): Promise<ActionResult> {
     const { error } = await supabase.from("share_links").delete().eq("id", id).eq("user_id", user.id);
     if (error) return dbError("revokeShareLink", error);
     revalidatePath("/settings");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+/* --------------------------- Phase 4: Internships -------------------------- */
+
+const INTERNSHIP_PATHS = ["/internships", "/dashboard"];
+
+function normalizeInternship(raw: Record<string, unknown>) {
+  const emptyToNull = (v: unknown) => (v === "" ? null : v);
+  return {
+    ...raw,
+    deadline: emptyToNull(raw.deadline),
+    link: emptyToNull(raw.link),
+    location: emptyToNull(raw.location),
+    stipend: emptyToNull(raw.stipend),
+    notes: emptyToNull(raw.notes),
+  };
+}
+
+export async function createInternship(input: unknown): Promise<ActionResult> {
+  if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
+  const parsed = internshipSchema.safeParse(
+    normalizeInternship((input ?? {}) as Record<string, unknown>)
+  );
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  try {
+    const { supabase, user } = await requireUser();
+    const { error } = await supabase.from("internships").insert({ ...parsed.data, user_id: user.id });
+    if (error) return dbError("createInternship", error);
+    await logEvent(supabase, user.id, "internship_added", `Tracking ${parsed.data.role} at ${parsed.data.company}`);
+    INTERNSHIP_PATHS.forEach((p) => revalidatePath(p));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+export async function updateInternship(id: string, input: unknown): Promise<ActionResult> {
+  if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
+  const parsed = internshipSchema.safeParse(
+    normalizeInternship((input ?? {}) as Record<string, unknown>)
+  );
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  try {
+    const { supabase, user } = await requireUser();
+    const { error } = await supabase
+      .from("internships")
+      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("user_id", user.id);
+    if (error) return dbError("updateInternship", error);
+    INTERNSHIP_PATHS.forEach((p) => revalidatePath(p));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
+  }
+}
+
+export async function setInternshipStatus(
+  internship: Internship,
+  status: Internship["status"]
+): Promise<ActionResult> {
+  const res = await updateInternship(internship.id, {
+    company: internship.company,
+    role: internship.role,
+    status,
+    deadline: internship.deadline,
+    link: internship.link,
+    location: internship.location,
+    stipend: internship.stipend,
+    notes: internship.notes,
+  });
+  if (res.ok && status !== internship.status && (status === "offer" || status === "accepted")) {
+    try {
+      const { supabase, user } = await requireUser();
+      await logEvent(
+        supabase,
+        user.id,
+        status === "offer" ? "internship_offer" : "internship_accepted",
+        `${status === "offer" ? "Offer" : "Accepted"}: ${internship.role} at ${internship.company}`
+      );
+    } catch {
+      /* XP logging must never break tracking */
+    }
+  }
+  return res;
+}
+
+export async function deleteInternship(id: string): Promise<ActionResult> {
+  if (!supabaseConfigured()) return { ok: false, error: NOT_CONFIGURED };
+  try {
+    const { supabase, user } = await requireUser();
+    const { error } = await supabase.from("internships").delete().eq("id", id).eq("user_id", user.id);
+    if (error) return dbError("deleteInternship", error);
+    INTERNSHIP_PATHS.forEach((p) => revalidatePath(p));
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };

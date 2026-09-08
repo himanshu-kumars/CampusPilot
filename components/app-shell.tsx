@@ -20,6 +20,7 @@ const NAV: { href: string; label: string; short: string; icon: IconName }[] = [
   { href: "/calendar", label: "Calendar", short: "Cal.", icon: "calendar" },
   { href: "/timetable", label: "Timetable", short: "Table", icon: "clock" },
   { href: "/groups", label: "Study Groups", short: "Groups", icon: "users" },
+  { href: "/internships", label: "Internships", short: "Jobs", icon: "briefcase" },
   { href: "/analytics", label: "Analytics", short: "Stats", icon: "chart" },
 ];
 

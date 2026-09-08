@@ -31,6 +31,8 @@ npm run dev
    viva, notifications, activity).
 4. Run **`supabase/migrations/003_phase3.sql`** for Phase 3 tables (timetable,
    study groups, share links) plus the code-checked join and member-list RPCs.
+4. Run **`supabase/migrations/004_phase4.sql`** for the Phase 4 `internships` table
+   (XP needs no new table — it derives from `activity_events`).
 4. Optionally run **`31_SUPABASE_TRIGGER.sql`** (auto-creates a profile row on signup —
    the app also self-heals a missing profile at login).
 4. Copy your project URL + anon key into `.env.local`:
@@ -70,7 +72,9 @@ app/
     dashboard/ attendance/ assignments/ exams/ study-planner/ settings/
     notes/ practice/ viva/ calendar/ analytics/   (Phase 2)
     timetable/ groups/                             (Phase 3)
+    internships/                                     (Phase 4)
   share/[token]/           Public read-only mentor report (Phase 3)
+  offline/                 Offline fallback page (Phase 4)
   manifest.ts              PWA manifest (Phase 3)
   api/
     study-plan/            AI plan generation (validated, rate-limited)
@@ -133,6 +137,19 @@ sample output; exam questions and viva honestly require a key.
   for a full-screen experience.
 - **Personalized analytics**: day streaks, focus-subject scoring, prep momentum from
   logged changes, and week-in-review counts.
+
+## Phase 4 features
+
+- **XP engine** (dashboard + `/analytics`): every logged action earns points derived
+  from `activity_events` — no separate ledger, history counts retroactively. Levels
+  follow a 100·(N−1)² curve, plus 9 honest badges (streaks, completions, groups,
+  offers). Practice turns earn 0 so grinding questions can't farm XP.
+- **Internship tracker** (`/internships`): wishlist → applied → screening →
+  interview → offer → accepted/rejected pipeline with deadlines, posting links,
+  stipend/location notes; active applications and next deadline on the dashboard.
+- **Offline mode**: service worker (production only) with network-first navigation
+  falling back to a cached `/offline` page, and stale-while-revalidate static
+  caching. Offline never fakes data — it just fails gracefully.
 
 ## Key decisions
 

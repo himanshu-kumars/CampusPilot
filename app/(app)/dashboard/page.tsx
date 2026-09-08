@@ -14,8 +14,10 @@ import {
   sortAssignments,
 } from "@/lib/calculations";
 import { createClient, getSessionUser, supabaseConfigured } from "@/lib/supabase/server";
-import type { Assignment, Exam, Subject, TimetableEntry } from "@/lib/types";
+import type { Assignment, Exam, Internship, Subject, TimetableEntry } from "@/lib/types";
+import type { XpEvent } from "@/lib/xp";
 import { TodaysClasses } from "@/components/timetable";
+import { ApplicationsWidget, XpCard } from "@/components/widgets";
 import { Badge, ButtonLink, Card, Icon, PageHeader, SetupRequired, cx, type IconName } from "@/components/ui";
 
 function StatCard({
@@ -69,12 +71,15 @@ export default async function DashboardPage() {
 
   const supabase = await createClient();
   const profile = await ensureProfile();
-  const [{ data: subjects }, { data: assignments }, { data: exams }, { data: timetable }] = await Promise.all([
-    supabase.from("subjects").select("*").order("name"),
-    supabase.from("assignments").select("*").order("deadline", { ascending: true }).limit(100),
-    supabase.from("exams").select("*").order("exam_date", { ascending: true }).limit(50),
-    supabase.from("timetable_entries").select("*").order("start_time"),
-  ]);
+  const [{ data: subjects }, { data: assignments }, { data: exams }, { data: timetable }, { data: xpEvents }, { data: internships }] =
+    await Promise.all([
+      supabase.from("subjects").select("*").order("name"),
+      supabase.from("assignments").select("*").order("deadline", { ascending: true }).limit(100),
+      supabase.from("exams").select("*").order("exam_date", { ascending: true }).limit(50),
+      supabase.from("timetable_entries").select("*").order("start_time"),
+      supabase.from("activity_events").select("kind, created_at").order("created_at", { ascending: false }).limit(1000),
+      supabase.from("internships").select("*").order("updated_at", { ascending: false }).limit(100),
+    ]);
 
   const subjectList = (subjects ?? []) as Subject[];
   const assignmentList = (assignments ?? []) as Assignment[];
@@ -177,6 +182,11 @@ export default async function DashboardPage() {
 
       <div className="mt-6">
         <TodaysClasses entries={(timetable ?? []) as TimetableEntry[]} subjects={subjectList} />
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <XpCard events={(xpEvents ?? []) as XpEvent[]} />
+        <ApplicationsWidget internships={(internships ?? []) as Internship[]} />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">

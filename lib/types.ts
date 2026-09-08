@@ -48,6 +48,30 @@ export interface Exam {
   updated_at: string;
 }
 
+export type InternshipStatus =
+  | "wishlist"
+  | "applied"
+  | "screening"
+  | "interview"
+  | "offer"
+  | "accepted"
+  | "rejected";
+
+export interface Internship {
+  id: string;
+  user_id: string;
+  company: string;
+  role: string;
+  status: InternshipStatus;
+  deadline: string | null;
+  link: string | null;
+  location: string | null;
+  stipend: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface StudyPlanRecord {
   id: string;
   user_id: string;

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Badge, Card, Icon, PageHeader, SetupRequired, cx, type IconName } from "@/components/ui";
+import { Badge, Card, Icon, PageHeader, ProgressBar, SetupRequired, cx, type IconName } from "@/components/ui";
 import {
   assignmentState,
   attendancePercent,
@@ -9,6 +9,7 @@ import {
 } from "@/lib/calculations";
 import { createClient, getSessionUser, supabaseConfigured } from "@/lib/supabase/server";
 import type { ActivityEvent, Assignment, Exam, Subject } from "@/lib/types";
+import { summarizeXp, type XpEvent } from "@/lib/xp";
 
 function Stat({ label, value, helper, icon }: { label: string; value: string; helper: string; icon: IconName }) {
   return (
@@ -38,6 +39,16 @@ const KIND_LABEL: Record<string, string> = {
   viva_completed: "Viva",
   quiz_completed: "Quiz",
   study_task_completed: "Study task",
+  class_recorded: "Class",
+  viva_question_answered: "Viva",
+  group_created: "Group",
+  group_joined: "Group",
+  group_task_completed: "Group task",
+  share_created: "Share",
+  csv_imported: "Import",
+  internship_added: "Application",
+  internship_offer: "Offer",
+  internship_accepted: "Accepted",
 };
 
 export default async function AnalyticsPage() {
@@ -53,7 +64,7 @@ export default async function AnalyticsPage() {
   if (!user) redirect("/login?next=/analytics");
 
   const supabase = await createClient();
-  const [{ data: subjects }, { data: assignments }, { data: exams }, { data: events }, { data: sets }, { data: plans }] =
+  const [{ data: subjects }, { data: assignments }, { data: exams }, { data: events }, { data: sets }, { data: plans }, { data: xpEvents }] =
     await Promise.all([
       supabase.from("subjects").select("*").order("name"),
       supabase.from("assignments").select("*").limit(500),
@@ -61,6 +72,7 @@ export default async function AnalyticsPage() {
       supabase.from("activity_events").select("*").order("created_at", { ascending: false }).limit(300),
       supabase.from("practice_sets").select("attempts,best_score"),
       supabase.from("study_plans").select("id", { count: "exact", head: false }).limit(1),
+      supabase.from("activity_events").select("kind, created_at").order("created_at", { ascending: false }).limit(5000),
     ]);
 
   const subjectList = (subjects ?? []) as Subject[];
@@ -109,6 +121,7 @@ export default async function AnalyticsPage() {
       else break;
     }
   }
+  const xp = summarizeXp((xpEvents ?? allEvents) as XpEvent[], streak);
   // Week in review.
   const weekAgo = Date.now() - 7 * 86_400_000;
   const recentEvents = allEvents.filter((e) => new Date(e.created_at).getTime() >= weekAgo);
@@ -195,6 +208,67 @@ export default async function AnalyticsPage() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        {/* XP level */}
+        <Card>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+              <Icon name="trophy" className="h-5 w-5 text-warning" />
+              Level {xp.level}
+            </h2>
+            <Badge tone="info">{xp.totalXp.toLocaleString()} XP</Badge>
+          </div>
+          <p className="mt-0.5 mb-3 text-sm text-muted">
+            Earned from {xp.actionsCount} logged action{xp.actionsCount === 1 ? "" : "s"} — every point traces to something you did.
+          </p>
+          <ProgressBar
+            value={xp.progress * 100}
+            tone="info"
+            label={`${xp.intoLevel.toLocaleString()} / ${xp.neededForNext.toLocaleString()} XP to Level ${xp.level + 1}`}
+          />
+          {xp.byKind.length > 0 && (
+            <ul className="mt-4 space-y-2">
+              {xp.byKind.slice(0, 5).map((k) => (
+                <li key={k.kind} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="truncate text-muted">{KIND_LABEL[k.kind] ?? "Activity"} × {k.count}</span>
+                  <span className="shrink-0 font-semibold text-ink">+{k.xp.toLocaleString()}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        {/* Badges */}
+        <Card>
+          <h2 className="text-base font-semibold text-ink">Badges</h2>
+          <p className="mt-0.5 mb-4 text-sm text-muted">
+            {xp.badges.filter((b) => b.earned).length} of {xp.badges.length} earned.
+          </p>
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {xp.badges.map((b) => (
+              <li
+                key={b.id}
+                className={cx(
+                  "flex items-center gap-2.5 rounded-xl border px-3 py-2",
+                  b.earned ? "border-line bg-surface" : "border-line opacity-50"
+                )}
+              >
+                <span
+                  className={cx(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                    b.earned ? "bg-amber-100 text-warning" : "bg-slate-100 text-muted"
+                  )}
+                >
+                  <Icon name="trophy" className="h-4 w-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-ink">{b.name}</span>
+                  <span className="block truncate text-xs text-muted">{b.description}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+
         {/* Activity chart */}
         <Card>
           <h2 className="text-base font-semibold text-ink">Activity — last 14 days</h2>

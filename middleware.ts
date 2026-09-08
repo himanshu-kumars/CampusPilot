@@ -13,6 +13,7 @@ const PROTECTED = [
   "/calendar",
   "/timetable",
   "/groups",
+  "/internships",
   "/analytics",
   "/settings",
 ];
@@ -65,6 +66,7 @@ export const config = {
     "/calendar/:path*",
     "/timetable/:path*",
     "/groups/:path*",
+    "/internships/:path*",
     "/analytics/:path*",
     "/settings/:path*",
   ],

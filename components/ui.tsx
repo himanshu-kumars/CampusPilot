@@ -41,7 +41,10 @@ export type IconName =
   | "compass"
   | "chart"
   | "chat"
-  | "users";
+  | "users"
+  | "briefcase"
+  | "trophy"
+  | "wifiOff";
 
 const PATHS: Record<IconName, ReactNode> = {
   grid: (
@@ -152,6 +155,27 @@ const PATHS: Record<IconName, ReactNode> = {
       <circle cx="9" cy="8" r="3.5" />
       <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
       <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M17.5 14.2a6.5 6.5 0 0 1 4 5.8" />
+    </>
+  ),
+  briefcase: (
+    <>
+      <rect x="2.5" y="7" width="19" height="13" rx="2" />
+      <path d="M8 7V5.5A1.5 1.5 0 0 1 9.5 4h5A1.5 1.5 0 0 1 16 5.5V7" />
+      <path d="M2.5 13h19" />
+    </>
+  ),
+  trophy: (
+    <>
+      <path d="M8 4h8v4a4 4 0 0 1-8 0V4Z" />
+      <path d="M8 5H4.5a.5.5 0 0 0-.5.5C4 8 5.6 10 8 10M16 5h3.5a.5.5 0 0 1 .5.5C20 8 18.4 10 16 10" />
+      <path d="M12 12v3M8.5 20h7M10 15.5h4" />
+    </>
+  ),
+  wifiOff: (
+    <>
+      <path d="M2.5 8.5a14 14 0 0 1 19 0M5.5 12a10 10 0 0 1 13 0M8.6 15.4a6 6 0 0 1 6.8 0" />
+      <circle cx="12" cy="19" r="1.2" fill="currentColor" />
+      <path d="M3 3l18 18" />
     </>
   ),
 };
